@@ -2,6 +2,7 @@ from tkinter import *
 from copy import deepcopy
 import tkinter.messagebox as message
 class LifeGame:
+    #реализуем поле на котором происходят все игровые действия
     class GameField:
         def __init__(self, game_field, master):
             self.game_field = game_field
@@ -10,6 +11,7 @@ class LifeGame:
             self.generate_field()
             self._steps = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1))
             self.game_started = False
+        #создание игрового поля
         def generate_field(self, w = 700, h = 400):
             self.game_started = False
             self.cur_hod = 0
@@ -40,13 +42,14 @@ class LifeGame:
                     full_row.append(self.game_field.create_rectangle(5 + self.move * column, 5 + self.move * row, 5 + self.move + self.move * column, 5 + self.move + self.move * row, fill = 'white'))
                     self.game_field.tag_bind(full_row[column], '<Button-1>', self.status_change)
                 self.field_id.append(full_row)
-
+        #функция обработки одного хода
         def game_on(self):
             self.game_started = True
             self.start_move()
             self.screen_change()
             if self._alive == 0:
                 self.end_game()
+        #вычисление статуса клеток следующего поколения
         def start_move(self):
             self.next_move = deepcopy(self.field_al)
             self._alive_next = 0
@@ -57,17 +60,18 @@ class LifeGame:
                     if s:
                         self._alive_next += 1
             self._alive = self._alive_next
-
+        #обновление панели показывающей текущий ход и количества живых
         def progress_panel(self):
             self.cur_hod += 1
             self.game_field.itemconfig(self.hod, text = self.cur_hod)
         def alive_panel(self):
             self.game_field.itemconfig(self.alive_bar, text = self._alive)
-
+        #функция конца игры в случае смерти всех клеток
         def end_game(self):
             message.showinfo("Game is over", "All cells are dead")
+
+        #переход к следующему поколению непосредственно на экране
         def screen_change(self):
-            print(self.field_al)
             self.progress_panel()
             self.alive_panel()
             for row in range(self.rows):
@@ -77,7 +81,7 @@ class LifeGame:
                     if not self.next_move[row][col]:
                         self.game_field.itemconfig(self.field_id[row][col], fill='white')
             self.field_al = self.next_move
-
+        #будет ли клетка заполнена в следующем поколении
         def is_alive(self, row, column):
             check = 0
             for step in self._steps:
@@ -85,12 +89,12 @@ class LifeGame:
                 check_column = (column + self.cols + step[1]) % self.cols
                 if self.field_al[check_row][check_column]:
                     check += 1
-            print(row, column, "\n", check)
             if check == 3 and not self.field_al[row][column]:
                 return True
             if check >= 2 and check <= 3 and self.field_al[row][column]:
                 return True
             return False
+        #реализует окно показывающее сколько живых клеток вокруг данной. Работает только во время игры
         def neigh(self, row, column):
             check = 0
             for step in self._steps:
@@ -99,9 +103,10 @@ class LifeGame:
                 if self.field_al[check_row][check_column]:
                     check += 1
             return check
+        #позволяет задать началальные условия путем нажатия мышкой на клетки (если игра не начата)
+        #иначе показывает количество живых клеток рядом с нажатой
         def status_change(self, event):
                 x, y = event.x, event.y
-                #print(x, y)
                 column, row = self.check(x-6, self.move), self.check(y-6, self.move)
                 if not self.game_started:
                     if not self.field_al[row][column]:
@@ -113,17 +118,16 @@ class LifeGame:
                         self.field_al[row][column] = False
                         self._alive -= 1
                     self.alive_panel()
-                    #print(row, column)
-                    #print(self.field_al[row][column])
                 else:
                     self.cell_info(row, column)
+        #отменяет игру
         def reset(self):
             self.game_field.delete(ALL)
             self.generate_field()
         def cell_info(self,row, col):
             info = self.neigh(row, col)
             message.showinfo("Cell information", "Number of neighbors: " + str(info))
-            print(row, col)
+        #разбивает поле из пикселей на ячейки
         def check(self, a, b):
             i = 0
             while a > b * 1:
@@ -145,20 +149,17 @@ class LifeGame:
         self.game_frame.grid(row= 0, column = 0, columnspan = 5, rowspan = 10, sticky = 'nsew')
         self.start_button.grid(row = 10, column = 0, sticky = 'nsew')
         self.reset_button.grid(row = 10, column = 1, sticky = 'nsew')
-        #self.stop_button.grid(row = 10, column = 2, sticky = 'nsew')
         self.exit_button.grid(row = 10, column = 3, sticky = 'nsew')
+    #сбрасывает состояние до начального
     def reset(self):
         self.start_button.config(text = "START GAME")
         self.reset_button.config(text = "RESET FIELD")
         self.game.reset()
+    #начинает игру
     def start(self):
         self.start_button.config(text = "NEXT GENERATION")
         self.reset_button.config(text="NEW GAME")
         self.game.game_on()
-    def stop(self):
-        #self.game_field.itemconfig(self.field[0][0], fill = 'blue')
-        pass
-
 
 
 root = Tk()
